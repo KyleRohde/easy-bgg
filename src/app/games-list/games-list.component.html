@@ -1,0 +1,46 @@
+<div id="YourGames">
+    <h1>Your Games</h1>
+    <form [formGroup]="formFields">
+        <mat-form-field>
+            <mat-label>Username</mat-label>
+            <input matInput formControlName="username">
+        </mat-form-field>
+        <button mat-raised-button (click)="onSubmit()">Fetch List</button>
+    </form>
+    <p *ngIf="refetch">Data loading. Re-fetch in 5 seconds...</p>
+
+    <table mat-table [dataSource]="entries" class="mat-elevation-z8">
+        <ng-container matColumnDef="thumbnail">
+            <th mat-header-cell *matHeaderCellDef>Thumbnail</th>
+            <td mat-cell *matCellDef="let entry"><img src={{entry.thumbnailUrl}} /></td>
+        </ng-container>
+        <ng-container matColumnDef="title">
+            <th mat-header-cell *matHeaderCellDef>Title</th>
+            <td mat-cell *matCellDef="let entry">{{entry.title}}</td>
+        </ng-container>
+        <ng-container matColumnDef="year">
+            <th mat-header-cell *matHeaderCellDef>Year</th>
+            <td mat-cell *matCellDef="let entry">{{entry.yearPublished}}</td>
+        </ng-container>
+        <ng-container matColumnDef="own">
+            <th mat-header-cell *matHeaderCellDef>Own</th>
+            <td mat-cell *matCellDef="let entry">
+                <mat-icon *ngIf="entry.own === true" fontIcon="radio_button_unchecked" class="green-circle" />
+            </td>
+        </ng-container>
+        <ng-container matColumnDef="wtp">
+            <th mat-header-cell *matHeaderCellDef>Want To Play</th>
+            <td mat-cell *matCellDef="let entry">
+                <mat-icon *ngIf="entry.wantToPlay === true" fontIcon="radio_button_unchecked" class="green-circle" />
+            </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="tableCols"></tr>
+        <tr mat-row *matRowDef="let row; columns: tableCols;"></tr>
+    </table>
+    <mat-paginator [length]="entries.data.length"
+        [pageSize]="10"
+        [pageSizeOptions]="[10, 25, 50]"
+        showFirstLastButtons
+        aria-label="Select page of games"
+    />
+</div>
