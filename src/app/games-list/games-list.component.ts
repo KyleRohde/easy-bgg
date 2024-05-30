@@ -12,7 +12,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import * as xml2js from 'xml2js';
-import { Exception } from 'sass';
 
 @Component({
   selector: 'app-games-list',
@@ -31,7 +30,7 @@ import { Exception } from 'sass';
     MatSortModule
   ],
   templateUrl: './games-list.component.html',
-  styleUrl: '/src/styles/styles.scss'
+  styleUrl: '/src/styles/games-list.component.scss'
 })
 export class GamesListComponent {
   tableCols: string[] = ["thumbnail", "title", "yearPublished", "own", "wantToPlay"];
