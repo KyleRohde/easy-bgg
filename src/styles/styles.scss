@@ -16,16 +16,29 @@ $bgg-red: #C21721;
         margin: 32px;
         
         .mat-column-thumbnail {
-            width: 100px;
+            width: 120px;
 
-            img {
+            a {
+                display: inline-block;
                 width: 100%;
                 height: 100px;
-                object-fit: contain;
+
+                img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: contain;
+                }
             }
         }
-        .mat-column-own, .mat-column-wtp {
-            width: 120px;
+        td.mat-column-thumbnail {
+            padding: 4px;
+
+            &:hover {
+                background-color: #DDD;
+            }
+        }
+        .mat-column-own, .mat-column-wantToPlay {
+            width: 140px;
         }
         .mat-icon.green-circle {
             height: 32px;

@@ -1,16 +1,18 @@
-import { AfterViewInit, Component, ViewChild } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { NgFor, NgIf } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { BoardgameBggEntry, BoardgameBggEntryParser as bggParser } from '../models/boardgame-bggentry';
-import { timer } from 'rxjs';
+import { interval, map, takeWhile } from 'rxjs';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatButtonModule } from '@angular/material/button';
+import { MatSort, MatSortModule } from '@angular/material/sort';
 import * as xml2js from 'xml2js';
+import { Exception } from 'sass';
 
 @Component({
   selector: 'app-games-list',
@@ -25,35 +27,32 @@ import * as xml2js from 'xml2js';
 		MatIconModule,
 		MatFormFieldModule,
 		MatInputModule,
-    MatButtonModule
+    MatButtonModule,
+    MatSortModule
   ],
   templateUrl: './games-list.component.html',
   styleUrl: '/src/styles/styles.scss'
 })
-export class GamesListComponent implements AfterViewInit {
-  tableCols: string[] = ["thumbnail", "title", "year", "own", "wtp"];
+export class GamesListComponent {
+  tableCols: string[] = ["thumbnail", "title", "yearPublished", "own", "wantToPlay"];
   formFields: FormGroup;
   entries: MatTableDataSource<BoardgameBggEntry> = new MatTableDataSource<BoardgameBggEntry>([]);
-  refetch: boolean = false;
+  refetch: number = 0;
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild(MatSort) sort!: MatSort;
 
   constructor(private http: HttpClient) {
     this.formFields = new FormGroup({
       username: new FormControl("")
     });
   }
-
-  ngAfterViewInit() {
-    this.entries.paginator = this.paginator;
-  }
-
+  
   onSubmit() {
-    console.log(this.formFields);
     if(this.formFields.value.username === "") {
       // TODO: show toast
     }
-    else {
+    else if(this.refetch === 0) {
       this.fetchData(this.formFields.value.username);
     }
   }
@@ -66,16 +65,25 @@ export class GamesListComponent implements AfterViewInit {
       observe: "response"
     }
     
+    this.entries = new MatTableDataSource<BoardgameBggEntry>([]);
     this.http.get(`${url}?${queryParams}`, reqOpts)
       .subscribe((res: any) => {
         if(res.status === 202) {
-          this.refetch = true;
           // re-fetch in 5 seconds
+          this.refetch = 5;
           const strCopy = (" " + username).slice(1);
-          timer(5 * 1000).subscribe(() => this.fetchData(strCopy));
+          interval(1000).pipe(
+            map(n => n + 1),
+            takeWhile(n => n < 6)
+          ).subscribe((n) => {
+            this.refetch = 5 - n;
+            if(n >= 5) {
+              this.fetchData(strCopy);
+            }
+          });
         }
         else {
-          this.refetch = false;
+          this.refetch = 0;
           this.formFields.value.username = "";
 
           let newGamesList: BoardgameBggEntry[] = [];
@@ -84,16 +92,23 @@ export class GamesListComponent implements AfterViewInit {
                 console.error(err.message);
               }
               else {
-                console.log({msg:"Here's your stuff", z: data.items.item});
                 data.items.item.forEach((val: any) => {
-                  let newEntry: BoardgameBggEntry = bggParser.fromBggXml(val);
-                  newGamesList.push(newEntry);
+                  try {
+                    let newEntry: BoardgameBggEntry = bggParser.fromBggXml(val);
+                    newGamesList.push(newEntry);
+                  }
+                  catch(ex:any) {
+                    console.log(ex, val);
+                  }
                 });
               }
-            })
-            let newData = new MatTableDataSource<BoardgameBggEntry>(newGamesList);
-            newData.paginator = this.paginator;
-            this.entries = newData;
+            });
+
+          let newData = new MatTableDataSource<BoardgameBggEntry>(newGamesList);
+          newData.paginator = this.paginator;
+          newData.sort = this.sort;
+          this.entries = newData;
+          console.log(newData);
         }
       }, (err: any) => console.log(err))
   }

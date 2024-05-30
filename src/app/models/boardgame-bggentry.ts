@@ -10,10 +10,20 @@ export interface BoardgameBggEntry {
 
 export class BoardgameBggEntryParser {
     public static fromBggXml(xml: any) {
+        let thumbnail:string = "assets/no-thumbnail.png";
+        let year:string = "--";
+
+        if(xml.thumbnail) {
+            thumbnail = xml.thumbnail[0];
+        }
+        if(xml.yearpublished) {
+            year = xml.yearpublished[0];
+        }
+
         let newEntry: BoardgameBggEntry = {
             title: xml.name[0]._,
-            thumbnailUrl: xml.thumbnail[0],
-            yearPublished: xml.yearpublished[0],
+            thumbnailUrl: thumbnail,
+            yearPublished: year,
             wantToPlay: xml.status[0].$.wanttoplay === "1",
             own: xml.status[0].$.own === "1",
             objectId: xml.$.objectid,
