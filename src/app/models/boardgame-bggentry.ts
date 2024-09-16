@@ -31,4 +31,19 @@ export class BoardgameBggEntryParser {
         };
         return newEntry;
     }
+
+    public static fromBggXmlSimple(xml: any) {
+        let thumbnail:string = "assets/no-thumbnail.png";
+
+        if(xml.thumbnail) {
+            thumbnail = xml.thumbnail[0];
+        }
+
+        let newEntry: any = {
+            title: xml.name[0]._,
+            thumbnailUrl: thumbnail
+        }
+        
+        return newEntry;
+    }
 }

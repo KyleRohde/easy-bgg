@@ -62,7 +62,7 @@ export class GamesListComponent {
     const reqOpts: any = {
       responseType: "text",
       observe: "response"
-    }
+    };
     
     this.entries = new MatTableDataSource<BoardgameBggEntry>([]);
     this.http.get(`${url}?${queryParams}`, reqOpts)
@@ -83,7 +83,6 @@ export class GamesListComponent {
         }
         else {
           this.refetch = 0;
-          this.formFields.value.username = "";
 
           let newGamesList: BoardgameBggEntry[] = [];
           xml2js.parseString(res.body, (err, data) => {
@@ -107,6 +106,7 @@ export class GamesListComponent {
           newData.paginator = this.paginator;
           newData.sort = this.sort;
           this.entries = newData;
+          this.formFields.setValue({username: ""});
           console.log(newData);
         }
       }, (err: any) => console.log(err))
