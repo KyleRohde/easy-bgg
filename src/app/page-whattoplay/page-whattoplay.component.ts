@@ -1,14 +1,16 @@
-import { Component } from '@angular/core';
+import { Component, Inject, NgZone, PLATFORM_ID } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { interval, map, takeWhile, lastValueFrom } from 'rxjs';
 import { BoardgameBggEntryParser as bggParser, SimpleBggEntry } from '../models/boardgame-bggentry';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { NgIf, NgFor } from '@angular/common';
+import { NgIf, NgFor, isPlatformBrowser } from '@angular/common';
 import {MatButtonToggleModule} from '@angular/material/button-toggle';
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import * as xml2js from 'xml2js';
+import * as am5 from "@amcharts/amcharts5";
+import * as am5venn from "@amcharts/amcharts5/venn";
 
 @Component({
   selector: 'app-page-whattoplay',
@@ -33,10 +35,20 @@ export class PageWhattoplayComponent {
   refetch: number = 0;
   tooManyUsers: boolean = false;
 
-  constructor(private http: HttpClient) {
+  private root!: am5.Root;
+
+  constructor(private http: HttpClient, @Inject(PLATFORM_ID) private platformId: Object, private zone: NgZone) {
     this.formFields = new FormGroup({
       username: new FormControl("")
     });
+  }
+
+  browserOnly(f: () => void) {
+    if (isPlatformBrowser(this.platformId)) {
+      this.zone.runOutsideAngular(() => {
+        f();
+      });
+    }
   }
 
   async onSubmit() {
@@ -88,7 +100,6 @@ export class PageWhattoplayComponent {
         }
         
         this.usersLoaded[newUser] = userGamesList;
-        console.log(this.usersLoaded);
         this.formFields.setValue({username: ""});
       }
       else {
@@ -121,6 +132,69 @@ export class PageWhattoplayComponent {
     }
   }
 
+  generateDiagram() {
+    if(this.selectedUsers.length !== 3) {
+      // TODO: error toast
+      console.log("Please select 3 users");
+      return;
+    }
+
+    let gameDict: { [key: string]: string[] } = {};
+    // { "user": games[] } --> { "game": users[] }
+    this.selectedUsers.forEach((val) => {
+      this.usersLoaded[val].forEach((game) => {
+        if(gameDict[game.title] === null || gameDict[game.title] === undefined) {
+          gameDict[game.title] = [val];
+        }
+        else {
+          gameDict[game.title].push(val);
+        }
+      });
+    });
+    console.log(gameDict);
+
+    let vennSetDict: { [key: string]: string[] } = {};
+    // Needs to be assembled EXCALTY like this for diagram HTML layers
+    this.selectedUsers.forEach((val) => vennSetDict[val] = []);
+    vennSetDict[`${this.selectedUsers[0]}~${this.selectedUsers[1]}`] = [];
+    vennSetDict[`${this.selectedUsers[0]}~${this.selectedUsers[2]}`] = [];
+    vennSetDict[`${this.selectedUsers[1]}~${this.selectedUsers[2]}`] = [];
+    vennSetDict[this.selectedUsers.join("~")] = [];
+    // { "game": users[] } --> { "user~ ... ~user": games[] }
+    Object.keys(gameDict).forEach((game) => {
+      const vsKey: string = gameDict[game].join("~");
+      vennSetDict[vsKey].push(game);
+    });
+    console.log(vennSetDict);
+
+    let seriesData: {}[] = [];
+    Object.keys(vennSetDict).forEach((setName) => {
+      let setEntry: any = { name: setName, value: vennSetDict[setName].length };
+      if(setName.includes("~")) {
+        setEntry.sets = setName.split("~");
+      }
+      seriesData.push(setEntry);
+    });
+    console.log(seriesData);
+
+    let root = am5.Root.new("VennDiagram");
+    let series = root.container.children.push(
+      am5venn.Venn.new(root, {
+        categoryField: "name",
+        valueField: "value",
+        intersectionsField: "sets"
+      })
+    );
+    /*[{ name: "A", value: 10 },
+    { name: "B", value: 8 },
+    { name: "X", value: 2, sets: ["A", "B"] }]*/
+    series.data.setAll(seriesData);
+    
+      //series.template?.events.on("click", doThing);
+
+      this.root = root;
+  }
+
   toggleUser(selectedUsers: string[]) {
     this.selectedUsers = selectedUsers;
     if(selectedUsers.length > 3) {
@@ -133,5 +207,14 @@ export class PageWhattoplayComponent {
 
   usernameKeys() {
     return Object.keys(this.usersLoaded);
+  }
+
+  ngOnDestroy() {
+    // Clean up chart when the component is removed
+    this.browserOnly(() => {
+      if (this.root) {
+        this.root.dispose();
+      }
+    });
   }
 }

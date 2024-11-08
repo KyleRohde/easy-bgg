@@ -22,6 +22,6 @@
         </mat-button-toggle-group>
         <p *ngIf="tooManyUsers">Too many users selected to calculate and display diagram.</p>
     </div>
-    <button onclick="generateDiagram()">Generate Diagram</button>
+    <button (click)="generateDiagram()">Generate Diagram</button>
     <div id="VennDiagram"></div>
 </div>
