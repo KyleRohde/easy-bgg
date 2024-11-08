@@ -8,6 +8,11 @@ export interface BoardgameBggEntry {
     collId: string;
 }
 
+export interface SimpleBggEntry {
+    title: string;
+    thumbnailUrl: string;
+}
+
 export class BoardgameBggEntryParser {
     public static fromBggXml(xml: any) {
         let thumbnail:string = "assets/no-thumbnail.png";
