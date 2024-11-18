@@ -151,7 +151,6 @@ export class PageWhattoplayComponent {
         }
       });
     });
-    console.log(gameDict);
 
     let vennSetDict: { [key: string]: string[] } = {};
     // Needs to be assembled EXCALTY like this for diagram HTML layers
@@ -160,23 +159,30 @@ export class PageWhattoplayComponent {
     vennSetDict[`${this.selectedUsers[0]}~${this.selectedUsers[2]}`] = [];
     vennSetDict[`${this.selectedUsers[1]}~${this.selectedUsers[2]}`] = [];
     vennSetDict[this.selectedUsers.join("~")] = [];
+
     // { "game": users[] } --> { "user~ ... ~user": games[] }
     Object.keys(gameDict).forEach((game) => {
       const vsKey: string = gameDict[game].join("~");
       vennSetDict[vsKey].push(game);
     });
-    console.log(vennSetDict);
 
     let seriesData: {}[] = [];
     Object.keys(vennSetDict).forEach((setName) => {
-      let setEntry: any = { name: setName, value: vennSetDict[setName].length };
-      if(setName.includes("~")) {
+      let setEntry: any = {
+        name: setName,
+        value: vennSetDict[setName].length > 0 ? 110 : 0,
+        games: vennSetDict[setName].length,
+        gameList: vennSetDict[setName]
+      };
+      const userCount = [...setName.matchAll(/~/g)];
+      if(userCount.length > 0) {
         setEntry.sets = setName.split("~");
+        setEntry.value -= (userCount.length * 50);
       }
       seriesData.push(setEntry);
     });
-    console.log(seriesData);
 
+    // assemble chart and properties
     let root = am5.Root.new("VennDiagram");
     let series = root.container.children.push(
       am5venn.Venn.new(root, {
@@ -185,14 +191,25 @@ export class PageWhattoplayComponent {
         intersectionsField: "sets"
       })
     );
+
+    series.hoverGraphics.setAll({
+      strokeDasharray: [4, 4],
+      stroke: am5.color(0x777777),
+      strokeWidth: 4
+    })
+    series.slices.template.set("tooltipText", "{games}");
+    
+    series.slices.template.events.on("click", (e: any) => {
+      console.log(e);
+      console.log(e.target._dataItem.dataContext);
+    });
+
     /*[{ name: "A", value: 10 },
     { name: "B", value: 8 },
     { name: "X", value: 2, sets: ["A", "B"] }]*/
     series.data.setAll(seriesData);
     
-      //series.template?.events.on("click", doThing);
-
-      this.root = root;
+    this.root = root;
   }
 
   toggleUser(selectedUsers: string[]) {
