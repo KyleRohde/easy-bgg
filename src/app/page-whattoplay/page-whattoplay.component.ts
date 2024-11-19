@@ -132,12 +132,20 @@ export class PageWhattoplayComponent {
     }
   }
 
+  // test: lukashi, itzbharath, mexo
   generateDiagram() {
     if(this.selectedUsers.length !== 3) {
       // TODO: error toast
       console.log("Please select 3 users");
       return;
     }
+
+    // clean up existing diagram if exists
+    this.browserOnly(() => {
+      if (this.root) {
+        this.root.dispose();
+      }
+    });
 
     let gameDict: { [key: string]: string[] } = {};
     // { "user": games[] } --> { "game": users[] }
@@ -160,24 +168,29 @@ export class PageWhattoplayComponent {
     vennSetDict[`${this.selectedUsers[1]}~${this.selectedUsers[2]}`] = [];
     vennSetDict[this.selectedUsers.join("~")] = [];
 
+    console.log(this.selectedUsers, gameDict);
     // { "game": users[] } --> { "user~ ... ~user": games[] }
     Object.keys(gameDict).forEach((game) => {
-      const vsKey: string = gameDict[game].join("~");
+      // For some reason, you can add duplicate records for a game. Find uniqueness
+      const vsKey: string = [... new Set(gameDict[game])].join("~");
       vennSetDict[vsKey].push(game);
     });
 
+    const totalGames = Object.keys(gameDict).length;
     let seriesData: {}[] = [];
     Object.keys(vennSetDict).forEach((setName) => {
+      const circleSize = 110 + (200 * (vennSetDict[setName].length / totalGames));
       let setEntry: any = {
         name: setName,
-        value: vennSetDict[setName].length > 0 ? 110 : 0,
+        value: vennSetDict[setName].length > 0 ? circleSize : 0,
         games: vennSetDict[setName].length,
         gameList: vennSetDict[setName]
       };
+
       const userCount = [...setName.matchAll(/~/g)];
       if(userCount.length > 0) {
         setEntry.sets = setName.split("~");
-        setEntry.value -= (userCount.length * 50);
+        setEntry.value = Math.max(setEntry.value - (userCount.length * 50), 0);
       }
       seriesData.push(setEntry);
     });
