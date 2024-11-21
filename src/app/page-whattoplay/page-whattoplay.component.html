@@ -24,4 +24,13 @@
     </div>
     <button (click)="generateDiagram()">Generate Diagram</button>
     <div id="VennDiagram"></div>
+    <div class="game-tiles">
+        <h2 *ngIf="tileTitle.length > 0">{{tileTitle}}</h2>
+        <div *ngFor="let game of gameTiles">
+            <a href="https://boardgamegeek.com/boardgame/{{game.objectId}}" target="_blank">
+                <img src="{{game.thumbnailUrl}}" alt="Thumbnail image for {{game.title}}" />
+                {{game.title}}
+            </a>
+        </div>
+    </div>
 </div>

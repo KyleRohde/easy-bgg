@@ -6,8 +6,8 @@ import { BoardgameBggEntryParser as bggParser, SimpleBggEntry } from '../models/
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { NgIf, NgFor, isPlatformBrowser } from '@angular/common';
-import {MatButtonToggleModule} from '@angular/material/button-toggle';
-import {MatCheckboxModule} from '@angular/material/checkbox';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import * as xml2js from 'xml2js';
 import * as am5 from "@amcharts/amcharts5";
 import * as am5venn from "@amcharts/amcharts5/venn";
@@ -31,6 +31,8 @@ import * as am5venn from "@amcharts/amcharts5/venn";
 export class PageWhattoplayComponent {
   usersLoaded: { [key: string]: SimpleBggEntry[] } = {};
   selectedUsers: string[] = [];
+  gameTiles: SimpleBggEntry[] = [];
+  tileTitle: string = "";
   formFields: FormGroup;
   refetch: number = 0;
   tooManyUsers: boolean = false;
@@ -59,8 +61,7 @@ export class PageWhattoplayComponent {
     else if(this.refetch === 0) {
       if(!Object.keys(this.usersLoaded).includes(newUser)) {
         let xmlParsed: any = await this.fetchData(newUser);
-        console.log(xmlParsed);
-        // TODO: Fix this
+        
         if(xmlParsed.status === 202) {
           // re-fetch in 5 seconds
           this.refetch = 5;
@@ -144,19 +145,25 @@ export class PageWhattoplayComponent {
     this.browserOnly(() => {
       if (this.root) {
         this.root.dispose();
+        this.gameTiles = [];
+        this.tileTitle = "";
       }
     });
 
-    let gameDict: { [key: string]: string[] } = {};
+    let gamesDistinct: { [key: string]: SimpleBggEntry } = {};
+
     // { "user": games[] } --> { "game": users[] }
-    this.selectedUsers.forEach((val) => {
-      this.usersLoaded[val].forEach((game) => {
-        if(gameDict[game.title] === null || gameDict[game.title] === undefined) {
-          gameDict[game.title] = [val];
+    let gameDict: { [key: string]: string[] } = {};
+    this.selectedUsers.forEach((val: string) => {
+      this.usersLoaded[val].forEach((game: SimpleBggEntry) => {
+        if(gameDict[game.objectId] === null || gameDict[game.objectId] === undefined) {
+          gameDict[game.objectId] = [val];
         }
         else {
-          gameDict[game.title].push(val);
+          gameDict[game.objectId].push(val);
         }
+
+        gamesDistinct[game.objectId] = game;
       });
     });
 
@@ -179,20 +186,21 @@ export class PageWhattoplayComponent {
     const totalGames = Object.keys(gameDict).length;
     let seriesData: {}[] = [];
     Object.keys(vennSetDict).forEach((setName) => {
-      const circleSize = 110 + (200 * (vennSetDict[setName].length / totalGames));
-      let setEntry: any = {
-        name: setName,
-        value: vennSetDict[setName].length > 0 ? circleSize : 0,
-        games: vennSetDict[setName].length,
-        gameList: vennSetDict[setName]
-      };
-
-      const userCount = [...setName.matchAll(/~/g)];
-      if(userCount.length > 0) {
-        setEntry.sets = setName.split("~");
-        setEntry.value = Math.max(setEntry.value - (userCount.length * 50), 0);
+      if(vennSetDict[setName].length > 0) {
+        let setEntry: any = {
+          name: setName,
+          value: 110 + (200 * (vennSetDict[setName].length / totalGames)),
+          games: vennSetDict[setName].length,
+          gameList: vennSetDict[setName]
+        };
+        
+        const userCount = [...setName.matchAll(/~/g)];
+        if(userCount.length > 0) {
+          setEntry.sets = setName.split("~");
+          setEntry.value = setEntry.value - (userCount.length * 50);
+        }
+        seriesData.push(setEntry);
       }
-      seriesData.push(setEntry);
     });
 
     // assemble chart and properties
@@ -213,8 +221,17 @@ export class PageWhattoplayComponent {
     series.slices.template.set("tooltipText", "{games}");
     
     series.slices.template.events.on("click", (e: any) => {
-      console.log(e);
-      console.log(e.target._dataItem.dataContext);
+      let newGameTiles: SimpleBggEntry[] = [];
+      e.target._dataItem.dataContext.gameList.forEach((game: string) => newGameTiles.push(gamesDistinct[game]));
+      newGameTiles.sort((g1, g2) => g1.title.toUpperCase() > g2.title.toUpperCase() ? 1 : 0);
+      this.gameTiles = newGameTiles;
+
+      if(!e.target._dataItem.dataContext.sets) {
+        this.tileTitle = `Want to Play List for ${e.target._dataItem.dataContext.name}`
+      }
+      else {
+        this.tileTitle = `Common Want-to-Play Games for ${e.target._dataItem.dataContext.sets.join(" & ")}`;
+      }
     });
 
     /*[{ name: "A", value: 10 },

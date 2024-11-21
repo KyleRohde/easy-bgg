@@ -11,6 +11,7 @@ export interface BoardgameBggEntry {
 export interface SimpleBggEntry {
     title: string;
     thumbnailUrl: string;
+    objectId: number;
 }
 
 export class BoardgameBggEntryParser {
@@ -43,9 +44,10 @@ export class BoardgameBggEntryParser {
         if(xml.thumbnail) {
             thumbnail = xml.thumbnail[0];
         }
-
+        
         let newEntry: any = {
             title: xml.name[0]._,
+            objectId: xml.$.objectid,
             thumbnailUrl: thumbnail
         }
         
