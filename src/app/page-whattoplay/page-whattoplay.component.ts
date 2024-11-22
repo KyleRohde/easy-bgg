@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { NgIf, NgFor, isPlatformBrowser } from '@angular/common';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatButtonModule } from '@angular/material/button';
 import * as xml2js from 'xml2js';
 import * as am5 from "@amcharts/amcharts5";
 import * as am5venn from "@amcharts/amcharts5/venn";
@@ -23,7 +24,8 @@ import * as am5venn from "@amcharts/amcharts5/venn";
 		NgIf,
     NgFor,
     MatCheckboxModule,
-    MatButtonToggleModule
+    MatButtonToggleModule,
+    MatButtonModule
   ],
   templateUrl: './page-whattoplay.component.html',
   styleUrl: '/src/styles/page-whattoplay.scss'
@@ -35,7 +37,7 @@ export class PageWhattoplayComponent {
   tileTitle: string = "";
   formFields: FormGroup;
   refetch: number = 0;
-  tooManyUsers: boolean = false;
+  badUserCount: boolean = false;
 
   private root!: am5.Root;
 
@@ -62,6 +64,7 @@ export class PageWhattoplayComponent {
       if(!Object.keys(this.usersLoaded).includes(newUser)) {
         let xmlParsed: any = await this.fetchData(newUser);
         
+        // TODO: add cutoff
         if(xmlParsed.status === 202) {
           // re-fetch in 5 seconds
           this.refetch = 5;
@@ -240,15 +243,17 @@ export class PageWhattoplayComponent {
     series.data.setAll(seriesData);
     
     this.root = root;
+
+    this.selectedUsers = [];
   }
 
   toggleUser(selectedUsers: string[]) {
     this.selectedUsers = selectedUsers;
-    if(selectedUsers.length > 3) {
-      this.tooManyUsers = true;
+    if(selectedUsers.length > 0 && selectedUsers.length !== 3) {
+      this.badUserCount = true;
     }
     else {
-      this.tooManyUsers = false;
+      this.badUserCount = false;
     }
   }
 

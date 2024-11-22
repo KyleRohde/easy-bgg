@@ -5,3 +5,9 @@
 h1 {
     margin-top: 40vh;
 }
+
+img {
+    position: absolute;
+    top: calc(100vh - 60px);
+    right: 0;
+}

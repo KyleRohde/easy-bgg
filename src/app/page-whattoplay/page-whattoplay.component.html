@@ -8,7 +8,8 @@
         <button mat-raised-button (click)="onSubmit()">Fetch List</button>
     </form>
     <p *ngIf="refetch > 0">Data loading. Re-fetch in {{refetch}} seconds...</p>
-    <div style="margin: 16px 0;">
+    <div class="toggle-btn-grp">
+        <span>Loaded Users:</span>
         <mat-button-toggle-group
             name="loadedUsers"
             aria-label="Loaded Users"
@@ -20,9 +21,14 @@
                 {{user}}
             </mat-button-toggle>
         </mat-button-toggle-group>
-        <p *ngIf="tooManyUsers">Too many users selected to calculate and display diagram.</p>
+        <p *ngIf="badUserCount">Please select three users to calculate and display diagram.</p>
     </div>
-    <button (click)="generateDiagram()">Generate Diagram</button>
+    <button mat-raised-button
+        (click)="generateDiagram()"
+        [disabled]="selectedUsers.length !== 3"
+    >
+        Generate Diagram
+    </button>
     <div id="VennDiagram"></div>
     <div class="game-tiles">
         <h2 *ngIf="tileTitle.length > 0">{{tileTitle}}</h2>
