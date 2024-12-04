@@ -5,6 +5,7 @@
 #VennDiagram {
     width: 60%;
     height: 500px;
+    margin: auto;
 }
 
 form > button {
@@ -46,6 +47,30 @@ form > button {
             
             &:hover {
                 background-color: #DEF;
+            }
+        }
+    }
+}
+
+@media only screen and (max-width: 600px) {
+    #WhatToPlay {
+        margin: 0 8px 16px 8px;
+    }
+    #VennDiagram {
+        width: 95%;
+        height: 300px;
+    }
+    .game-tiles {
+        padding: 16px 4px;
+
+        > div {
+            width: calc(50% - 28px);
+            margin: 0 8px 16px 8px;
+
+            img {
+                width: 90%;
+                height: 140px;
+                margin: 0 2%;
             }
         }
     }
