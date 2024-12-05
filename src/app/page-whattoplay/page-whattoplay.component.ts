@@ -37,13 +37,15 @@ export class PageWhattoplayComponent {
   tileTitle: string = "";
   formFields: FormGroup;
   refetch: number = 0;
+  hasRetried: boolean = false;
+  lockInput: boolean = false;
   badUserCount: boolean = false;
 
   private root!: am5.Root;
 
   constructor(private http: HttpClient, @Inject(PLATFORM_ID) private platformId: Object, private zone: NgZone) {
     this.formFields = new FormGroup({
-      username: new FormControl("")
+      username: new FormControl({ value: "", disabled: false})
     });
   }
 
@@ -61,11 +63,18 @@ export class PageWhattoplayComponent {
       // TODO: show toast
     }
     else if(this.refetch === 0) {
+      this.lockFields(true);
       if(!Object.keys(this.usersLoaded).includes(newUser)) {
         let xmlParsed: any = await this.fetchData(newUser);
         
-        // TODO: add cutoff
         if(xmlParsed.status === 202) {
+          if(this.hasRetried) {
+            // TODO: show toast
+            this.hasRetried = false;
+            this.lockFields(false);
+            return;
+          }
+          this.hasRetried = true;
           // re-fetch in 5 seconds
           this.refetch = 5;
           interval(1000).pipe(
@@ -81,6 +90,7 @@ export class PageWhattoplayComponent {
         }
         if(!xmlParsed || !xmlParsed.data) {
           // TODO: show toast
+          this.lockFields(false);
           return;
         }
 
@@ -100,14 +110,17 @@ export class PageWhattoplayComponent {
         catch(err: any) {
           console.log(err);
           console.log(xmlParsed);
+          this.lockFields(false);
           return;
         }
         
         this.usersLoaded[newUser] = userGamesList;
         this.formFields.setValue({username: ""});
+        this.lockFields(false);
       }
       else {
         // TODO: show toast for duplicate user
+        this.lockFields(false);
       }
     }
   }
@@ -120,7 +133,18 @@ export class PageWhattoplayComponent {
       observe: "response"
     };
     
-    let res: any = await lastValueFrom(this.http.get(`${url}?${queryParams}`, reqOpts));
+    let res: any = {};
+    try {
+      res = await lastValueFrom(this.http.get(`${url}?${queryParams}`, reqOpts));
+    }
+    catch(ex) {
+      console.error(ex);
+      return {
+        status: 500,
+        data: null
+      }
+    }
+    
     if(res.status === 202) {
       return {
         status: 202,
@@ -245,6 +269,16 @@ export class PageWhattoplayComponent {
     this.root = root;
 
     this.selectedUsers = [];
+  }
+
+  private lockFields(shouldLock: boolean) {
+    this.lockInput = shouldLock;
+    if(!shouldLock) {
+      this.formFields.get("username")?.enable();
+    }
+    else {
+      this.formFields.get("username")?.disable();
+    }
   }
 
   toggleUser(selectedUsers: string[]) {
