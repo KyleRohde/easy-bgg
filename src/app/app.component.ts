@@ -14,7 +14,7 @@ import { NgIf } from '@angular/common';
     NgIf
   ],
   templateUrl: './app.component.html',
-  styleUrl: '/src/styles/app.component.scss'
+  styleUrl: '../styles/app.component.scss'
 })
 export class AppComponent {
   sidebarActive: boolean = false;
