@@ -30,7 +30,7 @@ import * as xml2js from 'xml2js';
     MatSortModule
   ],
   templateUrl: './games-list.component.html',
-  styleUrl: '/src/styles/games-list.component.scss'
+  styleUrl: '../../styles/games-list.component.scss'
 })
 export class GamesListComponent {
   tableCols: string[] = ["thumbnail", "title", "yearPublished", "own", "wantToPlay"];

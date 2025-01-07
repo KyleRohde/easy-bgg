@@ -28,7 +28,7 @@ import * as am5venn from "@amcharts/amcharts5/venn";
     MatButtonModule
   ],
   templateUrl: './page-whattoplay.component.html',
-  styleUrl: '/src/styles/page-whattoplay.scss'
+  styleUrl: '../../styles/page-whattoplay.scss'
 })
 export class PageWhattoplayComponent {
   usersLoaded: { [key: string]: SimpleBggEntry[] } = {};
