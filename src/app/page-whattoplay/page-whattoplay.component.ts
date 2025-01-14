@@ -9,6 +9,8 @@ import { NgIf, NgFor, isPlatformBrowser } from '@angular/common';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatButtonModule } from '@angular/material/button';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatIconModule } from '@angular/material/icon';
 import * as xml2js from 'xml2js';
 import * as am5 from "@amcharts/amcharts5";
 import * as am5venn from "@amcharts/amcharts5/venn";
@@ -25,7 +27,9 @@ import * as am5venn from "@amcharts/amcharts5/venn";
     NgFor,
     MatCheckboxModule,
     MatButtonToggleModule,
-    MatButtonModule
+    MatButtonModule,
+    MatTooltip,
+    MatIconModule
   ],
   templateUrl: './page-whattoplay.component.html',
   styleUrl: '../../styles/page-whattoplay.scss'
@@ -40,6 +44,7 @@ export class PageWhattoplayComponent {
   hasRetried: boolean = false;
   lockInput: boolean = false;
   badUserCount: boolean = false;
+  showTestUsers: boolean = false;
 
   private root!: am5.Root;
 
@@ -162,9 +167,9 @@ export class PageWhattoplayComponent {
 
   // test: lukashi, itzbharath, mexo
   generateDiagram() {
-    if(this.selectedUsers.length !== 3) {
+    if(this.selectedUsers.length < 2 || this.selectedUsers.length > 4) {
       // TODO: error toast
-      console.log("Please select 3 users");
+      console.log("Please select 2, 3, or 4 users");
       return;
     }
 
@@ -195,12 +200,15 @@ export class PageWhattoplayComponent {
     });
 
     let vennSetDict: { [key: string]: string[] } = {};
-    // Needs to be assembled EXCALTY like this for diagram HTML layers
-    this.selectedUsers.forEach((val) => vennSetDict[val] = []);
-    vennSetDict[`${this.selectedUsers[0]}~${this.selectedUsers[1]}`] = [];
-    vennSetDict[`${this.selectedUsers[0]}~${this.selectedUsers[2]}`] = [];
-    vennSetDict[`${this.selectedUsers[1]}~${this.selectedUsers[2]}`] = [];
-    vennSetDict[this.selectedUsers.join("~")] = [];
+    // Diagram HTML layers need to be added in a specific order
+    // Singletons first -> pairs -> etc for higher set overlaps
+    for(let x = 1; x <= this.selectedUsers.length; x++) {
+      let newLayers: any = this.assembleLayers(x, this.selectedUsers, "");
+      vennSetDict = {
+        ...vennSetDict,
+        ...newLayers
+      };
+    }
 
     console.log(this.selectedUsers, gameDict);
     // { "game": users[] } --> { "user~ ... ~user": games[] }
@@ -216,7 +224,7 @@ export class PageWhattoplayComponent {
       if(vennSetDict[setName].length > 0) {
         let setEntry: any = {
           name: setName,
-          value: 110 + (200 * (vennSetDict[setName].length / totalGames)),
+          value: 410 + Math.floor(200 * (vennSetDict[setName].length / totalGames)),
           games: vennSetDict[setName].length,
           gameList: vennSetDict[setName]
         };
@@ -224,11 +232,12 @@ export class PageWhattoplayComponent {
         const userCount = [...setName.matchAll(/~/g)];
         if(userCount.length > 0) {
           setEntry.sets = setName.split("~");
-          setEntry.value = setEntry.value - (userCount.length * 50);
+          setEntry.value = setEntry.value - (userCount.length * 100);
         }
         seriesData.push(setEntry);
       }
     });
+    console.log(seriesData);
 
     // assemble chart and properties
     let root = am5.Root.new("VennDiagram");
@@ -271,6 +280,24 @@ export class PageWhattoplayComponent {
     this.selectedUsers = [];
   }
 
+  private assembleLayers(joinNum: number, userList: string[], currSetName: string): { [key: string]: string[] } {
+    let returnSetDict: { [key: string]: string[] } = {};
+    for(let x = 0; x < userList.length; x++) {
+      if(joinNum > 1) {
+        let recur = this.assembleLayers(joinNum - 1, userList.slice(x + 1), `${currSetName}${userList[x]}~`);
+        returnSetDict = {
+          ...returnSetDict,
+          ...recur
+        }
+      }
+      else {
+        returnSetDict[`${currSetName}${userList[x]}`] = [];
+      }
+    }
+
+    return returnSetDict;
+  }
+
   private lockFields(shouldLock: boolean) {
     this.lockInput = shouldLock;
     if(!shouldLock) {
@@ -283,12 +310,16 @@ export class PageWhattoplayComponent {
 
   toggleUser(selectedUsers: string[]) {
     this.selectedUsers = selectedUsers;
-    if(selectedUsers.length > 0 && selectedUsers.length !== 3) {
+    if(selectedUsers.length === 1 || selectedUsers.length > 4) {
       this.badUserCount = true;
     }
     else {
       this.badUserCount = false;
     }
+  }
+
+  toggleTestUsers() {
+    this.showTestUsers = !this.showTestUsers;
   }
 
   usernameKeys() {
