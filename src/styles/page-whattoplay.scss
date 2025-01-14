@@ -8,10 +8,38 @@
     margin: auto;
 }
 
-form > button {
-    vertical-align: top;
-    margin: 12px 8px;
+form {
+    > button {
+        vertical-align: top;
+        margin: 12px 8px;
+
+        &.tooltip {
+            min-width: 32px;
+            padding: 0;
+            background-color: #EEE;
+            border: 1px solid #555;
+
+            mat-icon {
+                margin: 0;
+            }
+        }
+    }
 }
+
+.test-users {
+    margin-bottom: 32px;
+
+    h2 {
+        margin: 8px 0;
+    }
+    > div {
+        display: inline-block;
+        min-width: 10%;
+        max-width: 30%;
+        margin-right: 3%;
+    }
+}
+
 .toggle-btn-grp {
     margin: 16px 0;
 

@@ -6,12 +6,26 @@
             <input matInput formControlName="username" />
         </mat-form-field>
         <button mat-raised-button
+            class="fetch"
             (click)="onSubmit()"
             [disabled]="lockInput"
         >
             Fetch List
         </button>
+        <button mat-raised-button
+            class="tooltip"
+            matTooltip="Need usernames for testing? Click me!"
+            (click)="toggleTestUsers()"
+        >
+            <mat-icon>question_mark</mat-icon>
+        </button>
     </form>
+    <div *ngIf="showTestUsers" class="test-users">
+        <h2>Test Users</h2>
+        <div>Lukashi</div>
+        <div>Itzbharath</div>
+        <div>Mexo</div>
+    </div>
     <p *ngIf="refetch > 0">Data loading. Re-fetch in {{refetch}} seconds...</p>
     <div class="toggle-btn-grp">
         <span>Loaded Users:</span>
@@ -26,14 +40,17 @@
                 {{user}}
             </mat-button-toggle>
         </mat-button-toggle-group>
-        <p *ngIf="badUserCount">Please select three users to calculate and display diagram.</p>
+        <p *ngIf="badUserCount">Please select 2-4 users to calculate and display diagram.</p>
     </div>
     <button mat-raised-button
         (click)="generateDiagram()"
-        [disabled]="selectedUsers.length !== 3"
+        [disabled]="badUserCount"
     >
         Generate Diagram
     </button>
+    <p *ngIf="selectedUsers.length > 3">
+        ** Generating a diagram with 4 users will typically result in overlaps that do not show properly
+    </p>
     <div id="VennDiagram"></div>
     <div class="game-tiles">
         <h2 *ngIf="tileTitle.length > 0">{{tileTitle}}</h2>

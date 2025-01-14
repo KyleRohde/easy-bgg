@@ -3,11 +3,17 @@
     <form [formGroup]="formFields">
         <mat-form-field>
             <mat-label>Username</mat-label>
-            <input matInput formControlName="username">
+            <input matInput formControlName="username" />
         </mat-form-field>
-        <button mat-raised-button (click)="onSubmit()">Fetch List</button>
+        <button mat-raised-button
+            (click)="onSubmit()"
+            [disabled]="lockInput"
+        >
+            Fetch List
+        </button>
     </form>
     <p *ngIf="refetch > 0">Data loading. Re-fetch in {{refetch}} seconds...</p>
+    <h2 *ngIf="titleName.length > 0">Collection for {{titleName}}</h2>
     <table mat-table matSort [dataSource]="entries" class="mat-elevation-z8">
         <ng-container matColumnDef="thumbnail">
             <th mat-header-cell *matHeaderCellDef>Thumbnail</th>
